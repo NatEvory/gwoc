@@ -4,9 +4,40 @@
 [![Release](https://img.shields.io/github/v/release/NatEvory/gwoc)](https://github.com/NatEvory/gwoc/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Git worktree workflow CLI for managing bare-repo hubs — work on many branches in parallel, each in its own directory, with no stashing or branch switching.
+**G**it **W**orktree **O**rchestration **C**LI — manage bare-repo hubs with one worktree per branch, so you can work on many branches in parallel, each in its own directory, with no stashing or branch switching.
 
 ![gwoc demo](demo/demo.gif)
+
+> **A note from the author:** gwoc is a tool I built with a lot of help from AI coding agents to make my own multi-branch workflow easier. I initially had no intention of releasing it publicly, but a few people asked about it, so here it is. Most of the code and docs are AI-generated, under my direction and review. Feedback and bug reports are very welcome. I hope it helps you as much as it helps me.
+
+## Install
+
+### Install script (Linux / macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh
+```
+
+Detects your platform, downloads the [latest release](https://github.com/NatEvory/gwoc/releases/latest) binary, verifies its checksum, and installs to `/usr/local/bin` (or `~/.local/bin` if that isn't writable). Pin a version with `GWOC_VERSION=v0.15.0`, or choose a directory with `GWOC_INSTALL=~/bin`.
+
+### Manual binary download
+
+Grab the binary for your platform from the [latest release](https://github.com/NatEvory/gwoc/releases/latest): `gwoc-linux-x64`, `gwoc-linux-arm64`, `gwoc-darwin-x64`, `gwoc-darwin-arm64`, or `gwoc-windows-x64.exe` (Windows builds are currently untested — reports welcome). Each release includes a `SHA256SUMS` file. Make it executable and put it on your `PATH`. No Node or Bun required at runtime.
+
+Requires git >= 2.35.0.
+
+### From source (requires [Bun](https://bun.sh))
+
+```bash
+git clone https://github.com/NatEvory/gwoc.git
+cd gwoc
+bun install
+bun link        # exposes `gwoc` on PATH
+```
+
+Or run directly: `./gwoc.ts <command>`, or build your own binary with `bun run build`.
+
+## Hub architecture
 
 A "hub" is a parent directory containing:
 - A bare git repo: `<name>.git`
@@ -40,39 +71,12 @@ gwoc merge feature-x      # merge into the primary worktree's branch
 gwoc rm feature-x --prune # remove worktree and branch
 ```
 
-## Install
+## AI coding agent skill
 
-### Install script (Linux / macOS)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh
-```
-
-Detects your platform, downloads the [latest release](https://github.com/NatEvory/gwoc/releases/latest) binary, verifies its checksum, and installs to `/usr/local/bin` (or `~/.local/bin` if that isn't writable). Pin a version with `GWOC_VERSION=v0.15.0`, or choose a directory with `GWOC_INSTALL=~/bin`.
-
-### Manual binary download
-
-Grab the binary for your platform from the [latest release](https://github.com/NatEvory/gwoc/releases/latest): `gwoc-linux-x64`, `gwoc-linux-arm64`, `gwoc-darwin-x64`, `gwoc-darwin-arm64`, or `gwoc-windows-x64.exe` (Windows builds are currently untested — reports welcome). Each release includes a `SHA256SUMS` file. Make it executable and put it on your `PATH`. No Node or Bun required at runtime.
-
-Requires git >= 2.35.0.
-
-### From source (requires [Bun](https://bun.sh))
+gwoc ships with a skill that teaches AI coding agents how to operate the CLI. It's an [APM](https://microsoft.github.io/apm/) package living in the `apm/` subdirectory, installable into any APM-supported agent (Claude Code and others):
 
 ```bash
-git clone https://github.com/NatEvory/gwoc.git
-cd gwoc
-bun install
-bun link        # exposes `gwoc` on PATH
-```
-
-Or run directly: `./gwoc.ts <command>`, or build your own binary with `bun run build`.
-
-## Claude Code skill
-
-gwoc ships with a Claude Code skill that teaches the agent how to operate the CLI. It's an [APM](https://agentpm.io) package living in the `apm/` subdirectory. Install into your user-level Claude Code skills:
-
-```bash
-apm install -g nat-evory/gwoc/apm
+apm install -g NatEvory/gwoc/apm
 ```
 
 Or, from a local clone:
@@ -81,7 +85,7 @@ Or, from a local clone:
 ./apm/install
 ```
 
-After installation, Claude Code picks up the skill automatically — invoke it by mentioning gwoc, worktrees, or hubs in conversation. Re-run the install after pulling new commits or editing the skill files; APM compiles on install rather than picking up edits live.
+After installation, your agent picks up the skill automatically — invoke it by mentioning gwoc, worktrees, or hubs in conversation. Re-run the install after pulling new commits or editing the skill files; APM compiles on install rather than picking up edits live.
 
 ## Commands
 

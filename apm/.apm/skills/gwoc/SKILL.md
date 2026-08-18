@@ -8,7 +8,7 @@ description: >-
   working inside a gwoc hub directory structure.
 ---
 
-# gwoc — Git Worktree Workflow CLI
+# gwoc — Git Worktree Orchestration CLI
 
 gwoc manages **hubs**: a bare git repo plus lightweight worktree directories, one per branch. This lets you work on multiple branches simultaneously without stashing or switching.
 
@@ -213,4 +213,4 @@ npm install
 - `gwoc checkout` errors if the worktree path is already taken, or if the branch is already checked out in another worktree.
 - Requires git >= 2.35.0 (for `--relative-paths` support).
 - Config is stored in the bare repo's git config (`gwoc.primary`, `worktree.useRelativePaths`).
-- Distributed as self-contained binaries (`bun run build:all` produces `dist/gwoc-<platform>-<arch>` with no runtime dependencies) or run from source with Bun.
+- Distributed as self-contained binaries from GitHub Releases (install script: `curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh`; glibc Linux and macOS — not musl/Alpine), or run from source with Bun.
