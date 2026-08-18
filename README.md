@@ -6,6 +6,8 @@
 
 Git worktree workflow CLI for managing bare-repo hubs — work on many branches in parallel, each in its own directory, with no stashing or branch switching.
 
+![gwoc demo](demo/demo.gif)
+
 A "hub" is a parent directory containing:
 - A bare git repo: `<name>.git`
 - A primary worktree: `<name>` (checked out from the default branch)
