@@ -1,0 +1,7 @@
+name: gwoc
+version: 0.15.0
+description: Skill for operating the gwoc CLI — git worktree hubs (bare repo + one worktree per branch)
+author: nat-evory
+dependencies:
+  apm: []
+  mcp: []

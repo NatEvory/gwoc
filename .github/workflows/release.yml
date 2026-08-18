@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test
+      - run: bun run build:all
+      - name: Checksums
+        run: cd dist && sha256sum gwoc-* > SHA256SUMS
+      - name: Smoke test the linux binary
+        run: |
+          ./dist/gwoc-linux-x64 --help
+          tmp=$(mktemp -d)
+          cd "$tmp"
+          "$GITHUB_WORKSPACE/dist/gwoc-linux-x64" init smoke
+          test -d smoke/smoke.git && test -d smoke/main
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "gwoc $GITHUB_REF_NAME" \
+            --generate-notes \
+            dist/gwoc-* dist/SHA256SUMS

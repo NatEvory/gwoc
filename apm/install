@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Install (or re-install) the gwoc APM package into ~/.claude/ (or other detected targets).
+# Pass additional flags through, e.g. `./install --target claude,opencode`.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec apm install -g "$SCRIPT_DIR" "$@"

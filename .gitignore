@@ -1,0 +1,9 @@
+node_modules/
+.claude/
+dist/
+
+# npm artifacts — bun.lock is the lockfile
+package-lock.json
+
+# APM dependencies
+apm_modules/
