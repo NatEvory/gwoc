@@ -3,6 +3,14 @@
 Notable changes to gwoc. Versions before 0.15.0 predate the public repository;
 their entries are summarized from the private development history.
 
+## Unreleased
+
+- Add `install.sh` one-line installer (`curl | sh`) with checksum verification
+  and a clear failure on musl-based distros (release binaries require glibc).
+- Add animated terminal demo to the README (reproducible via `demo/demo.tape`).
+- Harden CI and releases: hermetic test suite, release smoke test, and a
+  tag/version consistency guard.
+
 ## 0.15.0 — 2026-08-13
 
 - **Breaking:** `init` and `clone` now create the hub root directory themselves.

@@ -1,5 +1,7 @@
 export function usage(): void {
-  process.stdout.write(`Usage: gwoc <command> [args]
+  process.stdout.write(`gwoc — Git Worktree Orchestration CLI
+
+Usage: gwoc <command> [args]
 
 Commands:
   init <name> [options] [--no-hooks]                Initialize a bare hub
