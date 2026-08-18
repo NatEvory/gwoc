@@ -42,17 +42,17 @@ gwoc rm feature-x --prune # remove worktree and branch
 
 ## Install
 
-### Binary (no runtime required)
-
-Download the binary for your platform from the [latest release](https://github.com/NatEvory/gwoc/releases/latest):
+### Install script (Linux / macOS)
 
 ```bash
-curl -fsSLo gwoc https://github.com/NatEvory/gwoc/releases/latest/download/gwoc-linux-x64
-chmod +x gwoc
-sudo mv gwoc /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh
 ```
 
-Available targets: `gwoc-linux-x64`, `gwoc-linux-arm64`, `gwoc-darwin-x64`, `gwoc-darwin-arm64`, `gwoc-windows-x64.exe` (Windows builds are currently untested — reports welcome). Each release includes a `SHA256SUMS` file. No Node or Bun required at runtime.
+Detects your platform, downloads the [latest release](https://github.com/NatEvory/gwoc/releases/latest) binary, verifies its checksum, and installs to `/usr/local/bin` (or `~/.local/bin` if that isn't writable). Pin a version with `GWOC_VERSION=v0.15.0`, or choose a directory with `GWOC_INSTALL=~/bin`.
+
+### Manual binary download
+
+Grab the binary for your platform from the [latest release](https://github.com/NatEvory/gwoc/releases/latest): `gwoc-linux-x64`, `gwoc-linux-arm64`, `gwoc-darwin-x64`, `gwoc-darwin-arm64`, or `gwoc-windows-x64.exe` (Windows builds are currently untested — reports welcome). Each release includes a `SHA256SUMS` file. Make it executable and put it on your `PATH`. No Node or Bun required at runtime.
 
 Requires git >= 2.35.0.
 
