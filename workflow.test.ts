@@ -7,6 +7,17 @@ import { spawnSync } from "node:child_process";
 const gwoc = path.resolve("gwoc.ts");
 let tmpDir: string;
 
+// Tests spawn gwoc, which runs `git commit`/`git rebase` — supply an identity
+// via the environment so the suite passes on machines (and CI runners) with no
+// user-level git config, and doesn't depend on the developer's own.
+// Note: these mutations only reach children spawned with an explicit env that
+// spreads process.env (the run helpers below). Bare spawnSync(git ...) calls
+// don't see them under Bun, so direct test commits pass -c user.* flags.
+process.env.GIT_AUTHOR_NAME = "gwoc-test";
+process.env.GIT_AUTHOR_EMAIL = "gwoc-test@example.invalid";
+process.env.GIT_COMMITTER_NAME = "gwoc-test";
+process.env.GIT_COMMITTER_EMAIL = "gwoc-test@example.invalid";
+
 function run(args: string[], cwd?: string) {
   const res = spawnSync("bun", [gwoc, ...args], {
     cwd: cwd ?? tmpDir,
@@ -130,7 +141,7 @@ describe("workflow", () => {
     const wtPath = path.join(hub(), "feature-b");
     fs.writeFileSync(path.join(wtPath, "merged.txt"), "merged\n");
     spawnSync("git", ["-C", wtPath, "add", "merged.txt"], { stdio: "ignore" });
-    spawnSync("git", ["-C", wtPath, "commit", "-m", "add merged.txt"], { stdio: "ignore" });
+    spawnSync("git", ["-C", wtPath, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "add merged.txt"], { stdio: "ignore" });
 
     const res = run(["merge", "feature-b"], hub());
     expect(res.status).toBe(0);
@@ -227,7 +238,7 @@ describe("workflow", () => {
     fs.chmodSync(path.join(hookDir, "post-create"), 0o755);
     // commit so the hook is available in new worktrees
     spawnSync("git", ["-C", primary, "add", ".gwoc"], { stdio: "ignore" });
-    spawnSync("git", ["-C", primary, "commit", "-m", "add post-create hook"], { stdio: "ignore" });
+    spawnSync("git", ["-C", primary, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "add post-create hook"], { stdio: "ignore" });
 
     const res = run(["new", "hook-test"], hub());
     expect(res.status).toBe(0);
