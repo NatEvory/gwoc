@@ -12,6 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify tag matches package versions
+        run: |
+          pkg="v$(jq -r .version package.json)"
+          apm="v$(sed -n 's/^version: //p' apm/apm.yml)"
+          if [ "$pkg" != "$GITHUB_REF_NAME" ] || [ "$apm" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json ($pkg) or apm/apm.yml ($apm)" >&2
+            exit 1
+          fi
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
