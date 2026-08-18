@@ -15,7 +15,13 @@ err() { printf 'install.sh: %s\n' "$*" >&2; exit 1; }
 
 os=$(uname -s)
 case "$os" in
-  Linux) os=linux ;;
+  Linux)
+    os=linux
+    # The release binaries are glibc-linked; musl distros can't run them.
+    if [ -e /lib/ld-musl-x86_64.so.1 ] || [ -e /lib/ld-musl-aarch64.so.1 ]; then
+      err "musl-based distros (e.g. Alpine) are not supported — the release binaries require glibc"
+    fi
+    ;;
   Darwin) os=darwin ;;
   MINGW* | MSYS* | CYGWIN*)
     err "Windows: download gwoc-windows-x64.exe from https://github.com/$REPO/releases/latest" ;;
@@ -65,7 +71,8 @@ install -m 755 "$tmp/$asset" "$dir/gwoc" 2>/dev/null || {
   mv "$tmp/$asset" "$dir/gwoc" && chmod 755 "$dir/gwoc"
 } || err "could not write to $dir (set GWOC_INSTALL to a writable directory)"
 
-printf 'Installed %s to %s/gwoc\n' "$("$dir/gwoc" --version)" "$dir"
+version=$("$dir/gwoc" --version) || err "installed binary failed to run on this system"
+printf 'Installed %s to %s/gwoc\n' "$version" "$dir"
 case ":$PATH:" in
   *":$dir:"*) ;;
   *) printf 'note: %s is not on your PATH\n' "$dir" ;;
