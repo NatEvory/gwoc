@@ -4,7 +4,7 @@ import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
 import { gitDir, gitExitCode, runGit, worktreePath } from "../../git.ts";
-import { currentBranch, ensureClean } from "../helpers.ts";
+import { currentBranch, ensureClean, ensureCwdOutside } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc rename <old-slug> <new-slug> [--force]
@@ -57,6 +57,7 @@ export function wtRename(args: string[]): void {
   if (!fs.existsSync(oldPath)) {
     die(`Worktree not found: ${oldPath}`);
   }
+  ensureCwdOutside(oldPath, "rename");
   if (fs.existsSync(newPath)) {
     die(`Target path already exists: ${newPath}`);
   }

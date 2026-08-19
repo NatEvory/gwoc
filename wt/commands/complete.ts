@@ -91,8 +91,8 @@ function emitMatches(candidates: string[], prefix: string): void {
   }
 }
 
-// Find the bare repo quietly (no die on missing hub). Returns null if we're
-// not obviously in a hub root.
+// Find the bare repo quietly (no die on missing hub). Mirrors the resolution
+// in git.ts: hub root scan, then worktree common-dir, then ancestor walk.
 function findBareRepoQuiet(): string | null {
   const override = process.env.GWOC_GIT_DIR;
   if (override) {
@@ -104,23 +104,50 @@ function findBareRepoQuiet(): string | null {
   } catch {
     return null;
   }
-  let entries: fs.Dirent[];
-  try {
-    entries = fs.readdirSync(cwd, { withFileTypes: true });
-  } catch {
-    return null;
-  }
-  for (const entry of entries) {
-    if (!entry.isDirectory() || !entry.name.endsWith(".git")) continue;
-    const candidate = path.join(cwd, entry.name);
+
+  const isBare = (gitdir: string): boolean => {
     const out = spawnSync(
       "git",
-      ["--git-dir", candidate, "rev-parse", "--is-bare-repository"],
+      ["--git-dir", gitdir, "rev-parse", "--is-bare-repository"],
       { encoding: "utf8" },
     );
-    if ((out.stdout || "").trim() === "true") {
-      return candidate;
+    return out.status === 0 && (out.stdout || "").trim() === "true";
+  };
+  const scan = (dir: string): string | null => {
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return null;
     }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || !entry.name.endsWith(".git")) continue;
+      const candidate = path.join(dir, entry.name);
+      if (isBare(candidate)) return candidate;
+    }
+    return null;
+  };
+
+  const local = scan(cwd);
+  if (local) return local;
+
+  // Inside a worktree, the hub's bare repo is the common git dir.
+  const res = spawnSync("git", ["rev-parse", "--git-common-dir"], {
+    cwd,
+    encoding: "utf8",
+  });
+  if (res.status === 0) {
+    const common = path.resolve(cwd, (res.stdout || "").trim());
+    if (isBare(common)) return common;
+  }
+
+  let dir = path.dirname(cwd);
+  while (true) {
+    const found = scan(dir);
+    if (found) return found;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
   return null;
 }

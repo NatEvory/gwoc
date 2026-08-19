@@ -22,6 +22,24 @@ export function resolveHubRoot(parent: string, name: string, flat: boolean): str
   return root;
 }
 
+// Refuse operations that would remove or move the directory the user is
+// standing in — the shell would be left in a dead path.
+export function ensureCwdOutside(worktree: string, action: string): void {
+  let cwd: string;
+  let target: string;
+  try {
+    cwd = fs.realpathSync(process.cwd());
+    target = fs.realpathSync(worktree);
+  } catch {
+    return;
+  }
+  if (cwd === target || cwd.startsWith(target + path.sep)) {
+    die(
+      `Refusing to ${action} the worktree containing the current directory: ${worktree}\ncd out of it first (e.g. cd "$(gwoc root)").`
+    );
+  }
+}
+
 export function currentBranch(worktree: string): string {
   const name = gitOutput(["-C", worktree, "rev-parse", "--abbrev-ref", "HEAD"]);
   if (!name || name === "HEAD") {

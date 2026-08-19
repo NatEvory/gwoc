@@ -15,14 +15,14 @@ gwoc manages **hubs**: a bare git repo plus lightweight worktree directories, on
 ## Hub architecture
 
 ```
-myproject/              # hub root (run gwoc commands here)
+myproject/              # hub root
 ├── myproject.git/      # bare repo (central store, no working files)
 ├── main/               # primary worktree (default branch)
 ├── feature-a/          # worktree for feature-a branch
 └── bugfix-123/         # worktree for bugfix-123 branch
 ```
 
-- **Hub root** is the parent directory — run all gwoc commands from here.
+- **Hub root** is the parent directory. Commands work from anywhere inside the hub: the hub root, any worktree (at any depth), or other hub subdirectories.
 - **Primary worktree** tracks the default branch. Merges target it by default.
 - **Additional worktrees** are created with `gwoc new` or `gwoc checkout` and map 1:1 to branches.
 - **Slug = branch.** Branch names with slashes (e.g. `user/pr-123`) produce nested worktree directories.
@@ -206,7 +206,8 @@ npm install
 
 ## Important details
 
-- Run gwoc commands from the **hub root**, not from inside a worktree.
+- Commands resolve the hub from anywhere inside it (hub root, worktrees, subdirectories). Inside an unrelated git repo they refuse; use `--git-dir` / `GWOC_GIT_DIR` there.
+- `rm` and `rename` refuse to operate on the worktree containing the cwd; cd out first.
 - Slugs are normalized (trailing slashes stripped). Branch names with `/` create nested worktree directories.
 - `gwoc merge` refuses to merge if the target worktree has uncommitted changes.
 - `gwoc rm` refuses to remove worktrees with uncommitted changes unless `--force` is passed.

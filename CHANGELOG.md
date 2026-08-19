@@ -3,11 +3,21 @@
 Notable changes to gwoc. Versions before 0.15.0 predate the public repository;
 their entries are summarized from the private development history.
 
-## Unreleased
+## 0.16.0 — 2026-08-19
 
+- Commands now work from anywhere inside the hub, not just the hub root:
+  inside any worktree (at any depth, via the worktree's common git dir),
+  and in non-worktree hub subdirectories (via an ancestor scan). Inside an
+  unrelated git repo, commands still refuse rather than guessing.
+- `--git-dir` / `GWOC_GIT_DIR` now work from inside a git repo (previously a
+  hub-root check fired before the override was read).
+- `rm` and `rename` refuse to operate on the worktree containing the current
+  directory, instead of deleting the directory your shell is standing in.
+- Shell completion resolves the hub from inside worktrees too.
 - Add `install.sh` one-line installer (`curl | sh`) with checksum verification
   and a clear failure on musl-based distros (release binaries require glibc).
 - Add animated terminal demo to the README (reproducible via `demo/demo.tape`).
+- Add project website: https://www.natevory.com/gwoc/
 - Harden CI and releases: hermetic test suite, release smoke test, and a
   tag/version consistency guard.
 

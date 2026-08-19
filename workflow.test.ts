@@ -1152,3 +1152,103 @@ describe("checkout", () => {
     expect((res.stderr + res.stdout).toLowerCase()).toMatch(/already/);
   });
 });
+
+describe("running from inside the hub", () => {
+  let parent: string;
+  let hub: string;
+
+  function runIn(cwd: string, args: string[]) {
+    const res = spawnSync("bun", [gwoc, ...args], {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GWOC_GIT_DIR: "" },
+    });
+    return {
+      stdout: (res.stdout || "").trim(),
+      stderr: (res.stderr || "").trim(),
+      status: res.status ?? 1,
+    };
+  }
+
+  beforeAll(() => {
+    parent = fs.mkdtempSync(path.join(os.tmpdir(), "gwoc-inwt-"));
+    hub = path.join(parent, "proj");
+    expect(runIn(parent, ["init", "proj"]).status).toBe(0);
+    expect(runIn(hub, ["new", "feat-a"]).status).toBe(0);
+  });
+
+  afterAll(() => {
+    fs.rmSync(parent, { recursive: true, force: true });
+  });
+
+  test("list works from inside a worktree", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["list"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain("feat-a");
+    expect(res.stdout).toContain("main");
+  });
+
+  test("status works from a nested subdirectory of a worktree", () => {
+    const deep = path.join(hub, "feat-a", "deep", "dir");
+    fs.mkdirSync(deep, { recursive: true });
+    const res = runIn(deep, ["status", "feat-a"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain("Branch:       feat-a");
+  });
+
+  test("root resolves the hub root from inside a worktree", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["root"]);
+    expect(res.status).toBe(0);
+    expect(fs.realpathSync(res.stdout)).toBe(fs.realpathSync(hub));
+  });
+
+  test("new from inside a worktree creates a sibling at the hub root", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["new", "feat-b"]);
+    expect(res.status).toBe(0);
+    expect(fs.existsSync(path.join(hub, "feat-b"))).toBe(true);
+  });
+
+  test("works from a non-worktree hub subdirectory via ancestor walk", () => {
+    const sub = path.join(hub, ".gwoc", "hooks");
+    fs.mkdirSync(sub, { recursive: true });
+    const res = runIn(sub, ["list"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain("feat-a");
+  });
+
+  test("still errors inside a plain git repo that is not a hub", () => {
+    const plain = path.join(parent, "plain-repo");
+    spawnSync("git", ["init", "-q", plain], { stdio: "ignore" });
+    const res = runIn(plain, ["list"]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toContain("not part of a gwoc hub");
+  });
+
+  test("rm refuses to remove the worktree containing the cwd", () => {
+    const res = runIn(path.join(hub, "feat-b"), ["rm", "feat-b"]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toContain("Refusing to remove");
+    expect(fs.existsSync(path.join(hub, "feat-b"))).toBe(true);
+  });
+
+  test("rename refuses on the cwd worktree", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["rename", "feat-a", "feat-z"]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toContain("Refusing to rename");
+    expect(fs.existsSync(path.join(hub, "feat-a"))).toBe(true);
+  });
+
+  test("rm of another worktree still works from inside a worktree", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["rm", "feat-b", "--prune"]);
+    expect(res.status).toBe(0);
+    expect(fs.existsSync(path.join(hub, "feat-b"))).toBe(false);
+  });
+
+  test("slug completion works from inside a worktree", () => {
+    const res = runIn(path.join(hub, "feat-a"), ["__complete", "2", "gwoc", "rm", ""]);
+    expect(res.status).toBe(0);
+    const lines = res.stdout.split(/\n/).filter(Boolean);
+    expect(lines).toContain("feat-a");
+    expect(lines).toContain("main");
+  });
+});

@@ -318,3 +318,17 @@ gwoc default    # Default branch name (main/master)
 ```
 
 No flags on any of these (except `--git-dir` global override).
+
+## Hub resolution
+
+Commands that operate on a hub resolve the bare repo in this order:
+
+1. A bare `<name>.git` directory in the cwd (the hub root).
+2. If the cwd is inside a worktree (at any depth): the worktree's common git
+   dir, when it is a bare repo. Inside a git repo that is *not* hub-shaped,
+   commands refuse rather than guessing.
+3. Ancestor directories are scanned for a bare `<name>.git` (covers
+   non-worktree hub subdirectories like `<hub>/.gwoc/`).
+
+`--git-dir <path>` / `GWOC_GIT_DIR` override all of this. `rm` and `rename`
+refuse to operate on the worktree containing the cwd (cd out first).

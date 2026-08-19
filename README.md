@@ -44,7 +44,7 @@ A "hub" is a parent directory containing:
 - A primary worktree: `<name>` (checked out from the default branch)
 - Additional worktrees: `<slug>` (one per branch)
 
-gwoc creates and maintains that layout so you can work on many branches in parallel, each in its own directory.
+gwoc creates and maintains that layout so you can work on many branches in parallel, each in its own directory. Commands work from anywhere inside the hub: the hub root, any worktree at any depth, or other hub subdirectories.
 
 `init` and `clone` create the hub root for you: `gwoc clone git@host:me/my-repo.git` run from `~/dev` produces
 

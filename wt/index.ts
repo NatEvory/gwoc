@@ -1,5 +1,5 @@
 import { die } from "../common.ts";
-import { assertHubRoot, parseGitDirOverride } from "../git.ts";
+import { parseGitDirOverride } from "../git.ts";
 import { wtCheckout } from "./commands/checkout.ts";
 import { wtClone } from "./commands/clone.ts";
 import { wtComplete } from "./commands/complete.ts";
@@ -25,7 +25,6 @@ function hubCmd(args: string[]): string[] {
   if (args.includes("-h") || args.includes("--help")) {
     return args;
   }
-  assertHubRoot();
   return parseGitDirOverride(args);
 }
 
