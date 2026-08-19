@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gwoc · command reference</title>
+<meta name="description" content="Complete flag-level reference for every gwoc command: init, clone, new, checkout, merge, rebase, sync, doctor, and more.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23101312'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%235fb573'%3E%E2%94%9C%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap" id="top">
+
+  <header>
+    <nav class="crumb" aria-label="Breadcrumb"><a href="index.html">gwoc</a> / <span class="here">command reference</span></nav>
+    <h1 class="pagetitle">command reference</h1>
+    <p class="lede">Every command, every flag. Run any command with <code>-h</code>
+    for the same information in your terminal.</p>
+
+    <div class="term toc">
+      <div class="bar">$ gwoc help</div>
+      <pre>gwoc
+├── <span class="g">create</span>      <a href="#init">init</a> · <a href="#clone">clone</a> · <a href="#new">new</a> · <a href="#checkout">checkout</a>
+├── <span class="g">integrate</span>   <a href="#merge">merge</a> · <a href="#rebase">rebase</a> · <a href="#sync">sync</a>
+├── <span class="g">remotes</span>     <a href="#fetch">fetch</a> · <a href="#push">push</a> · <a href="#pull">pull</a>
+├── <span class="g">inspect</span>     <a href="#list">list</a> · <a href="#status">status</a> · <a href="#doctor">doctor</a>
+├── <span class="g">maintain</span>    <a href="#rename">rename</a> · <a href="#rm">rm</a> · <a href="#prune">prune</a> · <a href="#manage">manage</a>
+└── <span class="g">shell</span>       <a href="#completion">completion</a> · <a href="#info">info commands</a> · <a href="#global">global options</a></pre>
+    </div>
+  </header>
+
+  <section class="cmd" id="init" aria-labelledby="h-init">
+    <h2 id="h-init"><code>init</code></h2>
+    <p>Create a new bare repo hub with a primary worktree.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc init &lt;name&gt; [--dir &lt;path&gt;] [--branch &lt;name&gt;] [--primary &lt;name&gt;] [--flat] [--force] [--no-hooks]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--dir &lt;path&gt;</code></td><td>cwd</td><td>Directory to create the hub root in</td></tr>
+        <tr><td><code>--branch &lt;name&gt;</code></td><td>main</td><td>Default branch name</td></tr>
+        <tr><td><code>--primary &lt;name&gt;</code></td><td>branch name</td><td>Primary worktree directory name</td></tr>
+        <tr><td><code>--flat</code></td><td>false</td><td>Place the bare repo and worktree directly in --dir (no &lt;name&gt;/ hub root)</td></tr>
+        <tr><td><code>--force</code></td><td>false</td><td>Allow creating a hub inside an existing git repo</td></tr>
+        <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-init hooks</td></tr>
+      </tbody>
+    </table></div>
+    <p>Creates <code>&lt;dir&gt;/&lt;name&gt;/</code> (hub root) containing
+    <code>&lt;name&gt;.git</code> (bare repo) plus the primary worktree on the
+    default branch. An existing empty <code>&lt;name&gt;/</code> directory is
+    reused; a non-empty one is refused. With <code>--flat</code> everything
+    lands directly in <code>--dir</code> (the pre-0.15 layout). Refuses to run
+    inside an existing git repo unless <code>--force</code> is passed.</p>
+  </section>
+
+  <section class="cmd" id="clone" aria-labelledby="h-clone">
+    <h2 id="h-clone"><code>clone</code></h2>
+    <p>Clone a remote repo into a bare hub with a primary worktree.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc clone &lt;url&gt; [name] [--dir &lt;path&gt;] [--primary &lt;name&gt;] [--flat] [--force] [--no-hooks]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>[name]</code></td><td>derived from URL</td><td>Hub name</td></tr>
+        <tr><td><code>--dir &lt;path&gt;</code></td><td>cwd</td><td>Directory to create the hub root in</td></tr>
+        <tr><td><code>--primary &lt;name&gt;</code></td><td>default branch name</td><td>Primary worktree directory name</td></tr>
+        <tr><td><code>--flat</code></td><td>false</td><td>Place the bare repo and worktree directly in --dir (no &lt;name&gt;/ hub root)</td></tr>
+        <tr><td><code>--force</code></td><td>false</td><td>Allow cloning into a directory inside an existing git repo</td></tr>
+        <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-clone hooks</td></tr>
+      </tbody>
+    </table></div>
+    <p>Creates <code>&lt;dir&gt;/&lt;name&gt;/</code> as the hub root, clones
+    into a bare repo inside it, then adds a primary worktree on the default
+    branch. Configures the standard fetch refspec and runs an initial fetch, so
+    the hub tracks origin: branches pushed after the clone stay discoverable
+    via <code>fetch</code>, <code>checkout</code>, and <code>sync</code>.</p>
+  </section>
+
+  <section class="cmd" id="new" aria-labelledby="h-new">
+    <h2 id="h-new"><code>new</code></h2>
+    <p>Create a new worktree on a new branch.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc new &lt;slug&gt; [--branch &lt;name&gt;] [--no-hooks]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--branch &lt;name&gt;</code></td><td>repo default branch</td><td>Base branch for the new worktree</td></tr>
+        <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-create hooks</td></tr>
+      </tbody>
+    </table></div>
+    <p>Creates <code>&lt;hub-root&gt;/&lt;slug&gt;/</code> with a new branch
+    named <code>&lt;slug&gt;</code> based off the given base branch.</p>
+  </section>
+
+  <section class="cmd" id="checkout" aria-labelledby="h-checkout">
+    <h2 id="h-checkout"><code>checkout</code> <span class="alias">alias: co</span></h2>
+    <p>Check out an existing local or remote branch into a new worktree.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc checkout &lt;branch&gt; [--no-fetch] [--no-hooks]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--no-fetch</code></td><td>false</td><td>Skip the upfront git fetch --all --prune</td></tr>
+        <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-create hooks</td></tr>
+      </tbody>
+    </table></div>
+    <p>Slug equals the branch name verbatim, so slashes nest:
+    <code>user/pr-123</code> lands at <code>&lt;hub&gt;/user/pr-123</code>.
+    Resolution order after the fetch:</p>
+    <ol>
+      <li>A local branch exists: check it out and wire its upstream to <code>origin/&lt;branch&gt;</code> when the remote-tracking ref exists.</li>
+      <li>Exactly one remote has the branch: create a local tracking branch.</li>
+      <li>Multiple remotes have it: prefer origin, otherwise error.</li>
+      <li>Not found anywhere: error.</li>
+    </ol>
+    <p>Errors if the worktree path is taken or the branch is already checked
+    out in another worktree.</p>
+  </section>
+
+  <section class="cmd" id="merge" aria-labelledby="h-merge">
+    <h2 id="h-merge"><code>merge</code></h2>
+    <p>Merge a worktree branch into the primary worktree.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc merge &lt;slug&gt; [--into &lt;branch&gt;]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--into &lt;branch&gt;</code></td><td>current branch in primary</td><td>Target branch to merge into</td></tr>
+      </tbody>
+    </table></div>
+    <p>Targets the worktree that currently has <code>&lt;branch&gt;</code>
+    checked out, falling back to the primary worktree. Refuses if the target
+    worktree has uncommitted changes.</p>
+  </section>
+
+  <section class="cmd" id="rebase" aria-labelledby="h-rebase">
+    <h2 id="h-rebase"><code>rebase</code></h2>
+    <p>Rebase a worktree branch onto the latest target branch.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc rebase &lt;slug&gt; [--onto &lt;branch&gt;] [--no-fetch]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--onto &lt;branch&gt;</code></td><td>default branch</td><td>Branch to rebase onto</td></tr>
+        <tr><td><code>--no-fetch</code></td><td>false</td><td>Skip fetching before rebase</td></tr>
+      </tbody>
+    </table></div>
+    <p>Fetches from origin first (skipped automatically when no remote is
+    configured). Refuses on uncommitted changes. The rebase runs inside the
+    worktree directory, so conflicts are resolved right there.</p>
+  </section>
+
+  <section class="cmd" id="sync" aria-labelledby="h-sync">
+    <h2 id="h-sync"><code>sync</code></h2>
+    <p>Fetch the default branch and update every live worktree in one command.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc sync [--remote &lt;name&gt;] [--no-fetch] [--merge] [--stop-on-conflict]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--remote &lt;name&gt;</code></td><td>origin</td><td>Remote to fetch from</td></tr>
+        <tr><td><code>--no-fetch</code></td><td>false</td><td>Skip the upfront fetch</td></tr>
+        <tr><td><code>--merge</code></td><td>false</td><td>Use git merge instead of git rebase on feature worktrees</td></tr>
+        <tr><td><code>--stop-on-conflict</code></td><td>false</td><td>On conflict, stop mid-rebase in that worktree and exit non-zero</td></tr>
+      </tbody>
+    </table></div>
+    <p>Walks every live worktree: the default-branch worktree fast-forwards to
+    the remote; feature worktrees rebase (or merge) onto it. Dirty trees,
+    detached HEADs, and in-progress rebases are skipped. Conflicts auto-abort
+    by default, restoring the pre-sync state, and are listed at the end;
+    <code>--stop-on-conflict</code> leaves the worktree mid-rebase for manual
+    resolution instead.</p>
+  </section>
+
+  <section class="cmd" id="fetch" aria-labelledby="h-fetch">
+    <h2 id="h-fetch"><code>fetch</code></h2>
+    <p>Fetch refs into the bare repo.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc fetch [--remote &lt;name&gt;]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--remote &lt;name&gt;</code></td><td>origin</td><td>Remote to fetch from</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="cmd" id="push" aria-labelledby="h-push">
+    <h2 id="h-push"><code>push</code></h2>
+    <p>Push a worktree branch to a remote.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc push &lt;slug&gt; [--remote &lt;name&gt;] [--branch &lt;name&gt;] [--set-upstream]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--remote &lt;name&gt;</code></td><td>origin</td><td>Remote to push to</td></tr>
+        <tr><td><code>--branch &lt;name&gt;</code></td><td>current branch in worktree</td><td>Branch to push</td></tr>
+        <tr><td><code>--set-upstream</code></td><td>false</td><td>Set upstream without prompting</td></tr>
+      </tbody>
+    </table></div>
+    <p>Sets an upstream automatically when the branch has none; prompts before
+    changing an existing upstream unless <code>--set-upstream</code> is passed.</p>
+  </section>
+
+  <section class="cmd" id="pull" aria-labelledby="h-pull">
+    <h2 id="h-pull"><code>pull</code></h2>
+    <p>Pull a remote branch into a worktree.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc pull &lt;slug&gt; [--remote &lt;name&gt;] [--branch &lt;name&gt;]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--remote &lt;name&gt;</code></td><td>origin</td><td>Remote to pull from</td></tr>
+        <tr><td><code>--branch &lt;name&gt;</code></td><td>current branch in worktree</td><td>Branch to pull</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="cmd" id="list" aria-labelledby="h-list">
+    <h2 id="h-list"><code>list</code> <span class="alias">alias: ls</span></h2>
+    <p>List all worktrees in the hub: path, HEAD commit, and branch. No flags.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc list</pre>
+    </div>
+  </section>
+
+  <section class="cmd" id="status" aria-labelledby="h-status">
+    <h2 id="h-status"><code>status</code></h2>
+    <p>Show worktree info: branch, file changes, remote tracking, last commit.
+    With no slug, reports every worktree. Warns on slug/branch mismatches and
+    detached HEADs.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc status [slug]</pre>
+    </div>
+  </section>
+
+  <section class="cmd" id="doctor" aria-labelledby="h-doctor">
+    <h2 id="h-doctor"><code>doctor</code> <span class="alias">alias: check</span></h2>
+    <p>Run health checks on the hub.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc doctor [--merged] [--fix]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--merged</code></td><td>false</td><td>Also list orphan branches already merged into default</td></tr>
+        <tr><td><code>--fix</code></td><td>false</td><td>Interactively fix issues with safe automatic repairs</td></tr>
+      </tbody>
+    </table></div>
+    <p>Per-worktree checks: slug/branch mismatch, detached HEAD, upstream gone.
+    Hub-wide checks: orphan branches, prunable worktree entries, missing
+    primary worktree. Exits non-zero when issues are found.
+    <code>--fix</code> walks each issue with a prompt: prune stale entries,
+    rename mismatched directories, unset gone upstreams, and delete orphan
+    branches (unmerged ones get a per-branch confirm that defaults to no).</p>
+  </section>
+
+  <section class="cmd" id="rename" aria-labelledby="h-rename">
+    <h2 id="h-rename"><code>rename</code> <span class="alias">alias: mv</span></h2>
+    <p>Rename a worktree directory and its branch together.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc rename &lt;old&gt; &lt;new&gt; [--force]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--force</code></td><td>false</td><td>Rename even with uncommitted changes</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="cmd" id="rm" aria-labelledby="h-rm">
+    <h2 id="h-rm"><code>rm</code> <span class="alias">alias: remove</span></h2>
+    <p>Remove a worktree directory.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc rm &lt;slug&gt; [--prune] [--force]</pre>
+    </div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--prune</code></td><td>false</td><td>Also delete the branch</td></tr>
+        <tr><td><code>--force</code></td><td>false</td><td>Remove even with uncommitted changes; force-delete branch with --prune</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="cmd" id="prune" aria-labelledby="h-prune">
+    <h2 id="h-prune"><code>prune</code></h2>
+    <p>Prune stale worktree references from the bare repo: cleans up entries
+    for worktrees that no longer exist on disk. No flags.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc prune</pre>
+    </div>
+  </section>
+
+  <section class="cmd" id="manage" aria-labelledby="h-manage">
+    <h2 id="h-manage"><code>manage</code> <span class="alias">alias: ui</span></h2>
+    <p>Interactive worktree manager: an arrow-key picker for selecting a
+    worktree and an action (status, rename, rm, merge, push, pull, rebase,
+    new). Esc cancels at any level. Requires a real TTY.</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc manage</pre>
+    </div>
+  </section>
+
+  <section class="cmd" id="completion" aria-labelledby="h-completion">
+    <h2 id="h-completion"><code>completion</code></h2>
+    <p>Print a shell completion script. Completes subcommands, and worktree
+    slugs for slug-taking commands.</p>
+    <div class="term usage">
+      <div class="bar">install</div>
+      <pre><span class="c"># bash, in ~/.bashrc</span>
+eval "$(gwoc completion bash)"
+
+<span class="c"># zsh, in ~/.zshrc after compinit</span>
+eval "$(gwoc completion zsh)"
+
+<span class="c"># fish, in ~/.config/fish/config.fish</span>
+gwoc completion fish | source</pre>
+    </div>
+  </section>
+
+  <section class="cmd" id="info" aria-labelledby="h-info">
+    <h2 id="h-info">info commands</h2>
+    <p>Path and metadata printers, handy for scripting
+    (e.g. <code>cd "$(gwoc primary)"</code>).</p>
+    <div class="term usage">
+      <div class="bar">usage</div>
+      <pre>gwoc root         <span class="c"># hub root directory (parent of the bare repo)</span>
+gwoc dir          <span class="c"># bare repo path (&lt;name&gt;.git)</span>
+gwoc primary      <span class="c"># primary worktree path</span>
+gwoc path &lt;slug&gt;  <span class="c"># worktree path for a slug</span>
+gwoc default      <span class="c"># default branch name</span></pre>
+    </div>
+  </section>
+
+  <section class="cmd last" id="global" aria-labelledby="h-global">
+    <h2 id="h-global">global options &amp; hooks</h2>
+    <p>Every command accepts <code>-h</code>/<code>--help</code>. Commands that
+    operate on a hub locate the bare repo in the current directory; override
+    with <code>--git-dir &lt;path&gt;</code> or the <code>GWOC_GIT_DIR</code>
+    environment variable.</p>
+    <p><code>init</code>, <code>clone</code>, <code>new</code>, and
+    <code>checkout</code> run optional hook scripts after creating a worktree
+    (<code>post-init</code>, <code>post-clone</code>, <code>post-create</code>).
+    Every matching hook runs, in order:</p>
+    <div class="term usage">
+      <div class="bar">hook lookup order</div>
+      <pre>1. ~/.config/gwoc/hooks/&lt;name&gt;        <span class="c"># user level (honors XDG_CONFIG_HOME)</span>
+2. &lt;hub-root&gt;/.gwoc/hooks/&lt;name&gt;      <span class="c"># hub level</span>
+3. &lt;worktree&gt;/.gwoc/hooks/&lt;name&gt;      <span class="c"># worktree level</span></pre>
+    </div>
+    <p>Skip hooks per invocation with <code>--no-hooks</code>. Requires
+    git ≥ 2.35.0.</p>
+    <p class="backtotop"><a href="#top">↑ back to top</a> · <a href="index.html">← gwoc home</a></p>
+  </section>
+
+</div>
+</body>
+</html>
