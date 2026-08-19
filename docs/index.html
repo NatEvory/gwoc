@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gwoc · Git Worktree Orchestration CLI</title>
+<meta name="description" content="gwoc manages bare-repo hubs with one git worktree per branch: work on many branches in parallel, each in its own directory, with no stashing or branch switching.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23101312'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%235fb573'%3E%E2%94%9C%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1 class="title">gwoc<span class="cursor" aria-hidden="true"></span></h1>
+    <p class="expansion"><b>G</b>it <b>W</b>orktree <b>O</b>rchestration <b>C</b>LI</p>
+    <p class="lede">Manage bare-repo hubs with one worktree per branch: work on many
+    branches in parallel, each in its own directory, with no stashing and no
+    branch switching.</p>
+    <nav class="linkrow" aria-label="Project links">
+      <a href="commands.html">command reference</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/NatEvory/gwoc">github</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/NatEvory/gwoc/releases/latest">releases</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/NatEvory/gwoc/blob/main/CHANGELOG.md">changelog</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/NatEvory/gwoc/blob/main/LICENSE">mit license</a>
+    </nav>
+    <div class="installbar">
+      <code id="install-cmd"><span class="p">$ </span>curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh</code>
+      <button id="copy" type="button" aria-label="Copy install command">copy</button>
+    </div>
+  </header>
+
+  <section aria-labelledby="s-hub">
+    <h2 id="s-hub">the hub</h2>
+    <p>A hub is a directory holding a bare repo and one worktree per branch.
+    Every branch is just a directory. <code>cd</code> is your branch switcher,
+    and nothing you do in one branch disturbs another.</p>
+    <div class="term">
+      <div class="bar">~/dev/my-app</div>
+      <pre>my-app/
+├── my-app.git      <span class="c">← bare repo (central store)</span>
+├── <span class="b">main</span>            <span class="c">← primary worktree, default branch</span>
+├── <span class="b">feature-x</span>       <span class="c">← worktree for branch feature-x</span>
+└── <span class="b">hotfix-123</span>      <span class="c">← worktree for branch hotfix-123</span></pre>
+    </div>
+    <p class="note">gwoc creates and maintains this layout for you: clone once,
+    then grow and prune branches as directories.</p>
+  </section>
+
+  <section aria-labelledby="s-demo">
+    <h2 id="s-demo">demo</h2>
+    <div class="term">
+      <div class="bar">gwoc · clone → new → merge → rm</div>
+      <img src="demo.gif" alt="Terminal recording: gwoc clone creates a hub, gwoc new adds a feature worktree, a commit is merged back with gwoc merge, and the worktree is removed with gwoc rm --prune" loading="lazy">
+    </div>
+  </section>
+
+  <section aria-labelledby="s-quickstart">
+    <h2 id="s-quickstart">quickstart</h2>
+    <div class="term">
+      <div class="bar">sh</div>
+      <pre><span class="p">$ </span>gwoc clone git@github.com:you/your-repo.git   <span class="c"># creates ./your-repo/</span>
+<span class="p">$ </span>cd your-repo
+
+<span class="p">$ </span>gwoc new feature-x        <span class="c"># worktree + branch at ./feature-x</span>
+<span class="p">$ </span>cd feature-x              <span class="c"># ...edit, commit...</span>
+
+<span class="p">$ </span>cd ..
+<span class="p">$ </span>gwoc merge feature-x      <span class="c"># merge into the primary worktree's branch</span>
+<span class="p">$ </span>gwoc rm feature-x --prune <span class="c"># remove worktree and branch</span></pre>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-features">
+    <h2 id="s-features">what's in the box</h2>
+    <dl class="features">
+      <dt>checkout</dt><dd>check out any local or remote branch into a worktree, upstream wired</dd>
+      <dt>sync</dt><dd>fetch once, fast-forward the primary, rebase every worktree</dd>
+      <dt>doctor</dt><dd>health checks for the hub, with interactive --fix repair</dd>
+      <dt>hooks</dt><dd>post-init / post-clone / post-create at user, hub, and worktree level</dd>
+      <dt>manage</dt><dd>interactive worktree manager for point-and-pick cleanup</dd>
+      <dt>completion</dt><dd>bash, zsh, and fish tab completion, slug-aware</dd>
+      <dt>rename</dt><dd>move a worktree directory and its branch together</dd>
+      <dt>status</dt><dd>branch, cleanliness, and drift for one or all worktrees</dd>
+    </dl>
+  </section>
+
+  <section aria-labelledby="s-install">
+    <h2 id="s-install">install</h2>
+
+    <h3>script (linux / macos)</h3>
+    <div class="term">
+      <div class="bar">sh</div>
+      <pre><span class="p">$ </span>curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh</pre>
+    </div>
+    <p class="note">Detects your platform, verifies the checksum, installs to
+    /usr/local/bin or ~/.local/bin. Pin with <code>GWOC_VERSION=v0.15.0</code>;
+    redirect with <code>GWOC_INSTALL=~/bin</code>. Binaries are glibc-linked, so
+    Alpine/musl isn't supported. Requires git ≥ 2.35.</p>
+
+    <h3>manual</h3>
+    <p>Grab a binary from the
+    <a href="https://github.com/NatEvory/gwoc/releases/latest">latest release</a>
+    (linux/macos, x64/arm64, plus a windows build that is currently untested)
+    and put it on your PATH. Self-contained: no runtime required.</p>
+
+    <h3>ai coding agent skill</h3>
+    <div class="term">
+      <div class="bar">sh</div>
+      <pre><span class="p">$ </span>apm install -g NatEvory/gwoc/apm</pre>
+    </div>
+    <p class="note">An <a href="https://microsoft.github.io/apm/">APM</a> package
+    that teaches AI coding agents (Claude Code and others) to drive gwoc.</p>
+  </section>
+
+  <footer>
+    <p class="rule">colophon</p>
+    <p>Built by <a href="https://github.com/NatEvory">Nat Evory</a> with a lot of
+    help from AI coding agents, to make one multi-branch workflow easier.
+    Released because a few people asked. Feedback and bug reports welcome:
+    <a href="https://github.com/NatEvory/gwoc/issues">open an issue</a>.</p>
+    <p>MIT licensed. No telemetry, no accounts, just git.</p>
+  </footer>
+
+</div>
+<script>
+  document.getElementById("copy").addEventListener("click", async (e) => {
+    const cmd = "curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh";
+    try {
+      await navigator.clipboard.writeText(cmd);
+      e.target.textContent = "copied";
+      setTimeout(() => { e.target.textContent = "copy"; }, 1600);
+    } catch {
+      e.target.textContent = "select it";
+    }
+  });
+</script>
+</body>
+</html>
