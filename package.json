@@ -1,6 +1,6 @@
 {
   "name": "gwoc",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Git Worktree Orchestration CLI — bare-repo hubs with one worktree per branch",
   "license": "MIT",
   "author": "Nat Evory",

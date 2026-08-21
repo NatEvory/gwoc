@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { gitDir, gitOutput, worktreePath } from "../../git.ts";
-import { tryCurrentBranch } from "../helpers.ts";
+import { gitDir, gitOutput } from "../../git.ts";
+import { resolveWorktreePath, tryCurrentBranch } from "../helpers.ts";
 import { worktreeIssues } from "../checks.ts";
 
 function usage(): void {
@@ -126,7 +126,7 @@ export function wtStatus(args: string[]): void {
   const slug = normalizeSlug(positionals[0] || "");
 
   if (slug) {
-    const target = worktreePath(slug);
+    const target = resolveWorktreePath(slug);
     if (!fs.existsSync(target)) {
       die(`Worktree not found: ${target}`);
     }

@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { defaultBranch, gitDir, gitInherit, gitOutput, runGit, worktreePath } from "../../git.ts";
-import { currentBranch, ensureClean } from "../helpers.ts";
+import { defaultBranch, gitDir, gitInherit, gitOutput, runGit } from "../../git.ts";
+import { currentBranch, ensureClean, resolveWorktreePath } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc rebase <slug> [--onto <branch>] [--no-fetch]
@@ -40,7 +40,7 @@ export function wtRebase(args: string[]): void {
     die("Missing slug");
   }
 
-  const wt = worktreePath(slug);
+  const wt = resolveWorktreePath(slug);
   if (!fs.existsSync(wt)) {
     die(`Worktree not found: ${wt}`);
   }

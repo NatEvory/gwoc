@@ -25,7 +25,7 @@ myproject/              # hub root
 - **Hub root** is the parent directory. Commands work from anywhere inside the hub: the hub root, any worktree (at any depth), or other hub subdirectories.
 - **Primary worktree** tracks the default branch. Merges target it by default.
 - **Additional worktrees** are created with `gwoc new` or `gwoc checkout` and map 1:1 to branches.
-- **Slug = branch.** Branch names with slashes (e.g. `user/pr-123`) produce nested worktree directories.
+- **Slug = branch.** Branch names with slashes (e.g. `user/pr-123`) produce nested worktree directories, unless `gwoc.slugSeparator` is set (e.g. `_`), which flattens them to `user_pr-123`. Set it per user with `git config --global gwoc.slugSeparator _`, or per hub via `gwoc init/clone --slug-separator _`. Slug-taking commands accept branch or directory names either way.
 
 ## Setting up a hub
 

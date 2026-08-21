@@ -3,6 +3,26 @@
 Notable changes to gwoc. Versions before 0.15.0 predate the public repository;
 their entries are summarized from the private development history.
 
+## 0.17.0 — 2026-08-20
+
+- New `gwoc.slugSeparator` setting: flatten slashed branch names into flat
+  worktree directories (branch `feature/ticket-1234` at directory
+  `feature_ticket-1234`). Set per user with
+  `git config --global gwoc.slugSeparator _`, or per hub with
+  `gwoc init/clone --slug-separator _` (hub config overrides user config).
+  Default behavior (nested directories) is unchanged.
+- Slug-taking commands (`rm`, `merge`, `status`, `rename`, `push`, `pull`,
+  `rebase`, `path`) now accept either the directory name or the branch name.
+- `rm --prune` deletes the branch actually checked out in the worktree,
+  rather than assuming the branch is named after the directory.
+- `doctor`/`status` mismatch checks compare through the separator, so
+  flattened worktrees are not flagged.
+- Shell completion emits full worktree slugs (fixes nested slugs like
+  `user/pr-123` completing as just `pr-123`), and `sync` labels nested
+  worktrees by their full slug.
+- Colliding flat names (e.g. branches `feature/x` and `feature_x` with `_`
+  as separator) are refused at creation.
+
 ## 0.16.0 — 2026-08-19
 
 - Commands now work from anywhere inside the hub, not just the hub root:

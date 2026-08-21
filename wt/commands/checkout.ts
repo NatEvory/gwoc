@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
 import {
+  branchToSlug,
   gitDir,
   gitExitCode,
   gitOutput,
@@ -90,7 +91,7 @@ export function wtCheckout(args: string[]): void {
     die("Missing branch");
   }
   const branch = normalizeSlug(raw);
-  const slug = branch;
+  const slug = branchToSlug(branch);
   const target = worktreePath(slug);
 
   if (fs.existsSync(target)) {

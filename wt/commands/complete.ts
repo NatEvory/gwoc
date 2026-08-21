@@ -166,7 +166,9 @@ function emitSlugs(prefix: string): void {
     if (!line.startsWith("worktree ")) continue;
     const p = line.slice("worktree ".length).trim();
     if (!p || !fs.existsSync(p)) continue;
-    const slug = path.basename(p);
+    // Slug is the path relative to the hub root (parent of the bare repo) —
+    // basename would be wrong for nested slugs like user/pr-123.
+    const slug = path.relative(path.dirname(bare), p);
     if (slug.startsWith(prefix)) {
       process.stdout.write(slug + "\n");
     }

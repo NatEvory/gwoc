@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { gitInherit, worktreePath } from "../../git.ts";
-import { currentBranch } from "../helpers.ts";
+import { gitInherit } from "../../git.ts";
+import { currentBranch, resolveWorktreePath } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc push <slug> [--remote <name>] [--branch <name>] [--set-upstream]
@@ -58,7 +58,7 @@ export function wtPush(args: string[]): void {
   }
 
   const remote = values.remote as string;
-  const target = worktreePath(slug);
+  const target = resolveWorktreePath(slug);
   if (!fs.existsSync(target)) {
     die(`Worktree not found: ${target}`);
   }

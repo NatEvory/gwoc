@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-import { defaultBranch, gitDir, gitOutput, hubRoot, primaryWorktree } from "../git.ts";
+import { branchToSlug, defaultBranch, gitDir, gitOutput, hubRoot, primaryWorktree } from "../git.ts";
 import { tryCurrentBranch } from "./helpers.ts";
 
 export interface Issue {
@@ -77,7 +77,9 @@ export function worktreeIssues(worktreePathAbs: string): Issue[] {
   } catch {
     isPrimary = false;
   }
-  if (!isPrimary && slug !== branch) {
+  // Compare against the branch mapped through the slug separator, so a
+  // flattened directory (feature_x for branch feature/x) is not a mismatch.
+  if (!isPrimary && slug !== branchToSlug(branch)) {
     issues.push({
       level: "warn",
       code: "slug-branch-mismatch",

@@ -18,7 +18,7 @@
 curl -fsSL https://raw.githubusercontent.com/NatEvory/gwoc/main/install.sh | sh
 ```
 
-Detects your platform, downloads the [latest release](https://github.com/NatEvory/gwoc/releases/latest) binary, verifies its checksum, and installs to `/usr/local/bin` (or `~/.local/bin` if that isn't writable). Pin a version with `GWOC_VERSION=v0.15.0`, or choose a directory with `GWOC_INSTALL=~/bin`.
+Detects your platform, downloads the [latest release](https://github.com/NatEvory/gwoc/releases/latest) binary, verifies its checksum, and installs to `/usr/local/bin` (or `~/.local/bin` if that isn't writable). Pin a version with `GWOC_VERSION=v0.16.0`, or choose a directory with `GWOC_INSTALL=~/bin`.
 
 ### Manual binary download
 
@@ -56,6 +56,8 @@ gwoc creates and maintains that layout so you can work on many branches in paral
 
 Pass `--flat` to skip the hub-root directory and place the bare repo and worktree directly in the current directory (the pre-0.15 behavior).
 
+Branch names containing `/` (like `feature/ticket-1234`) nest into subdirectories by default. To flatten them instead (`feature_ticket-1234`), set a slug separator: `git config --global gwoc.slugSeparator _` applies to all your hubs, and `gwoc init/clone --slug-separator _` (or `git config` in the hub's bare repo) sets it per hub, overriding the global value. Slug-taking commands accept either the branch name or the directory name.
+
 ## Quickstart
 
 ```bash
@@ -90,9 +92,10 @@ After installation, your agent picks up the skill automatically — invoke it by
 ## Commands
 
 ```
-gwoc init <name> [--dir <path>] [--branch <name>] [--flat] [--no-hooks]
+gwoc init <name> [--dir <path>] [--branch <name>] [--flat] [--slug-separator <s>] [--no-hooks]
                                                                  Initialize a bare hub
-gwoc clone <url> [name] [--dir <path>] [--flat] [--no-hooks]     Clone into a bare hub
+gwoc clone <url> [name] [--dir <path>] [--flat] [--slug-separator <s>] [--no-hooks]
+                                                                 Clone into a bare hub
 gwoc new <slug> [--branch <name>] [--no-hooks]                   Create a worktree on a new branch
 gwoc checkout <branch> [--no-fetch] [--no-hooks]                 Check out an existing branch into a worktree
 gwoc merge <slug> [--into <branch>]                              Merge worktree branch

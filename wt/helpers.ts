@@ -2,7 +2,46 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { die } from "../common.ts";
-import { gitDir, gitExitCode, gitOutput } from "../git.ts";
+import { branchToSlug, gitDir, gitExitCode, gitOutput, worktreePath } from "../git.ts";
+
+/**
+ * Resolve a user-supplied slug or branch name to a worktree path.
+ * Tries the literal directory name, then the branch name flattened through
+ * the slug separator, then any worktree with that branch checked out.
+ * Falls back to the mapped path (for "not found" messages and `gwoc path`,
+ * where the mapped location is where the worktree would live).
+ */
+export function resolveWorktreePath(arg: string): string {
+  const literal = worktreePath(arg);
+  if (fs.existsSync(literal)) {
+    return literal;
+  }
+  const mapped = worktreePath(branchToSlug(arg));
+  if (mapped !== literal && fs.existsSync(mapped)) {
+    return mapped;
+  }
+  const byBranch = worktreeForBranch(arg);
+  if (byBranch) {
+    return byBranch;
+  }
+  return mapped;
+}
+
+/**
+ * Resolve a user-supplied slug or branch name to a branch name.
+ * Prefers an existing branch of that exact name; otherwise the branch
+ * checked out in the worktree directory of that name.
+ */
+export function resolveBranchArg(arg: string): string {
+  if (gitExitCode(["--git-dir", gitDir(), "show-ref", "--verify", "--quiet", `refs/heads/${arg}`]) === 0) {
+    return arg;
+  }
+  const dir = worktreePath(arg);
+  if (fs.existsSync(dir)) {
+    return currentBranch(dir);
+  }
+  die(`Branch not found: ${arg}`);
+}
 
 // Resolve the hub root for init/clone. By default the hub root is
 // <parent>/<name>; --flat keeps the pre-0.15 layout where the bare repo and

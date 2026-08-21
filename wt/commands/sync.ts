@@ -3,7 +3,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
-import { defaultBranch, gitDir, gitExitCode, gitOutput, primaryWorktree, runGit } from "../../git.ts";
+import { defaultBranch, gitDir, gitExitCode, gitOutput, hubRoot, primaryWorktree, runGit } from "../../git.ts";
 import { liveWorktreePaths } from "../checks.ts";
 import { tryCurrentBranch } from "../helpers.ts";
 
@@ -107,7 +107,7 @@ function rebaseOrMerge(wt: string, onto: string, label: string, ctx: Ctx): Rebas
 type SyncOutcome = "ok" | "skip" | "conflict-skipped" | "conflict-stop";
 
 function syncOne(wt: string, ctx: Ctx): SyncOutcome {
-  const label = path.basename(wt);
+  const label = path.relative(hubRoot(), wt);
 
   // Check rebase-in-progress before detached-HEAD: an in-progress rebase
   // also has HEAD detached, but the right message is "resolve first".
@@ -213,7 +213,7 @@ export function wtSync(args: string[]): void {
   for (const wt of ordered) {
     const result = syncOne(wt, ctx);
     if (result === "conflict-skipped") {
-      conflicted.push(path.basename(wt));
+      conflicted.push(path.relative(hubRoot(), wt));
     } else if (result === "conflict-stop") {
       // --stop-on-conflict: leave it in-progress and bail so the user can fix.
       process.exit(1);
