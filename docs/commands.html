@@ -364,9 +364,12 @@ gwoc default      <span class="c"># default branch name</span></pre>
   <section class="cmd last" id="global" aria-labelledby="h-global">
     <h2 id="h-global">global options &amp; hooks</h2>
     <p>Every command accepts <code>-h</code>/<code>--help</code>. Commands that
-    operate on a hub locate the bare repo in the current directory; override
-    with <code>--git-dir &lt;path&gt;</code> or the <code>GWOC_GIT_DIR</code>
-    environment variable.</p>
+    operate on a hub work from anywhere inside it: the hub root, any worktree
+    at any depth, or other hub subdirectories. From an unrelated git repo they
+    refuse; override with <code>--git-dir &lt;path&gt;</code> or the
+    <code>GWOC_GIT_DIR</code> environment variable. <code>rm</code> and
+    <code>rename</code> refuse to operate on the worktree your shell is
+    standing in.</p>
     <p><code>init</code>, <code>clone</code>, <code>new</code>, and
     <code>checkout</code> run optional hook scripts after creating a worktree
     (<code>post-init</code>, <code>post-clone</code>, <code>post-create</code>).

@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
 import { gitDir, gitOutput, runGit, worktreePath } from "../../git.ts";
+import { ensureCwdOutside } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc rm <slug> [--prune] [--force]
@@ -44,6 +45,7 @@ export function wtRemove(args: string[]): void {
   if (!fs.existsSync(target)) {
     die(`Worktree not found: ${target}`);
   }
+  ensureCwdOutside(target, "remove");
   if (!force) {
     const dirty = gitOutput(["-C", target, "status", "--porcelain"]);
     if (dirty) {

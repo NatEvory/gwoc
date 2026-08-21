@@ -85,14 +85,6 @@ export function abspath(target: string): string {
   return path.resolve(target);
 }
 
-export function assertHubRoot(): void {
-  if (isInsideRepo(process.cwd())) {
-    die(
-      "Run this command from the hub root (parent of the bare repo).\nOr set GWOC_GIT_DIR / --git-dir to select the bare repo."
-    );
-  }
-}
-
 /** Check whether a directory (or its nearest existing ancestor) is inside a git work tree. */
 export function isInsideRepo(dir: string): boolean {
   let check = dir;
@@ -108,37 +100,95 @@ export function isInsideRepo(dir: string): boolean {
   return res.status === 0 && (res.stdout || "").trim() === "true";
 }
 
-function resolveGitDir(): string {
-  if (gitDirOverride) {
-    return abspath(gitDirOverride);
+export function isBareRepo(gitdir: string): boolean {
+  const out = spawnSync("git", ["--git-dir", gitdir, "rev-parse", "--is-bare-repository"], {
+    encoding: "utf8",
+  });
+  return out.status === 0 && (out.stdout || "").trim() === "true";
+}
+
+/** Absolute paths of bare `<name>.git` repos directly inside `dir`. */
+export function bareReposIn(dir: string): string[] {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
   }
-
-  assertHubRoot();
-
-  const cwd = process.cwd();
-  const entries = fs.readdirSync(cwd, { withFileTypes: true });
   const matches: string[] = [];
   for (const entry of entries) {
     if (!entry.isDirectory() || !entry.name.endsWith(".git")) {
       continue;
     }
-    const candidate = path.join(cwd, entry.name);
-    const out = spawnSync("git", ["--git-dir", candidate, "rev-parse", "--is-bare-repository"], {
-      encoding: "utf8",
-    });
-    if ((out.stdout || "").trim() === "true") {
-      matches.push(candidate);
+    const candidate = path.join(dir, entry.name);
+    if (isBareRepo(candidate)) {
+      matches.push(abspath(candidate));
     }
   }
+  return matches;
+}
 
-  if (matches.length === 1) {
-    return abspath(matches[0]);
+/** The bare repo shared by a worktree containing `dir`, or null. */
+export function bareRepoOfWorktree(dir: string): string | null {
+  const res = spawnSync("git", ["rev-parse", "--git-common-dir"], { cwd: dir, encoding: "utf8" });
+  if (res.status !== 0) {
+    return null;
   }
-  if (matches.length === 0) {
-    die("No bare repo found in: " + cwd + "\nSet GWOC_GIT_DIR or pass --git-dir <path>.");
-  }
+  const common = path.resolve(dir, (res.stdout || "").trim());
+  return isBareRepo(common) ? common : null;
+}
+
+function dieAmbiguous(dir: string, matches: string[]): never {
   const listed = matches.map((p) => "- " + p).join("\n");
-  die("Multiple bare repos found in: " + cwd + "\n" + listed + "\nSet GWOC_GIT_DIR or pass --git-dir <path>.");
+  die("Multiple bare repos found in: " + dir + "\n" + listed + "\nSet GWOC_GIT_DIR or pass --git-dir <path>.");
+}
+
+function resolveGitDir(): string {
+  if (gitDirOverride) {
+    return abspath(gitDirOverride);
+  }
+
+  const cwd = process.cwd();
+
+  // 1. Hub root: the bare repo sits directly in the cwd.
+  const local = bareReposIn(cwd);
+  if (local.length === 1) {
+    return local[0];
+  }
+  if (local.length > 1) {
+    dieAmbiguous(cwd, local);
+  }
+
+  // 2. Inside a worktree: all worktrees of a hub share the bare repo as
+  // their common git dir, so rev-parse points straight at it from any depth.
+  if (isInsideRepo(cwd)) {
+    const common = bareRepoOfWorktree(cwd);
+    if (common) {
+      return common;
+    }
+    die(
+      "This git repo is not part of a gwoc hub (its git dir is not a bare repo).\nRun gwoc inside a hub, or set GWOC_GIT_DIR / --git-dir to select the bare repo."
+    );
+  }
+
+  // 3. Non-worktree subdirectory of a hub (e.g. <hub>/.gwoc/): walk up.
+  let dir = path.dirname(cwd);
+  while (true) {
+    const found = bareReposIn(dir);
+    if (found.length === 1) {
+      return found[0];
+    }
+    if (found.length > 1) {
+      dieAmbiguous(dir, found);
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      break;
+    }
+    dir = parent;
+  }
+
+  die("No bare repo found in: " + cwd + " or any parent directory.\nSet GWOC_GIT_DIR or pass --git-dir <path>.");
 }
 
 export function gitDir(): string {
