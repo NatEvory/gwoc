@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { defaultBranch, gitDir, hubRoot, requireGitRelativePaths, runGit, worktreePath } from "../../git.ts";
+import { branchToSlug, defaultBranch, gitDir, hubRoot, requireGitRelativePaths, runGit, worktreePath } from "../../git.ts";
 import { runHooks } from "../hooks.ts";
 
 function usage(): void {
@@ -41,13 +41,14 @@ export function wtNew(args: string[]): void {
     allowPositionals: true,
   });
 
-  const slug = normalizeSlug(positionals[0] || "");
-  if (!slug) {
+  const input = normalizeSlug(positionals[0] || "");
+  if (!input) {
     die("Missing slug");
   }
 
   const baseBranch = (values.branch as string) || defaultBranch();
-  const branch = slug;
+  const branch = input;
+  const slug = branchToSlug(branch);
   const target = worktreePath(slug);
   if (fs.existsSync(target)) {
     die(`Worktree path already exists: ${target}`);

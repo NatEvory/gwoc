@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { gitDir, gitOutput, runGit, worktreePath } from "../../git.ts";
-import { ensureCwdOutside } from "../helpers.ts";
+import { gitDir, gitOutput, runGit } from "../../git.ts";
+import { ensureCwdOutside, resolveWorktreePath, tryCurrentBranch } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc rm <slug> [--prune] [--force]
@@ -41,11 +41,14 @@ export function wtRemove(args: string[]): void {
 
   const force = values.force as boolean;
   const prune = values.prune as boolean;
-  const target = worktreePath(slug);
+  const target = resolveWorktreePath(slug);
   if (!fs.existsSync(target)) {
     die(`Worktree not found: ${target}`);
   }
   ensureCwdOutside(target, "remove");
+  // With a slug separator configured, the branch name and directory name can
+  // differ — capture the checked-out branch before the worktree goes away.
+  const branchToDelete = prune ? (tryCurrentBranch(target) ?? slug) : "";
   if (!force) {
     const dirty = gitOutput(["-C", target, "status", "--porcelain"]);
     if (dirty) {
@@ -62,7 +65,7 @@ export function wtRemove(args: string[]): void {
 
   if (prune) {
     const deleteFlag = force ? "-D" : "-d";
-    runGit(["--git-dir", gitDir(), "branch", deleteFlag, slug]);
-    process.stdout.write(`Deleted branch: ${slug}\n`);
+    runGit(["--git-dir", gitDir(), "branch", deleteFlag, branchToDelete]);
+    process.stdout.write(`Deleted branch: ${branchToDelete}\n`);
   }
 }

@@ -21,6 +21,9 @@ Options:
   --primary <name>   Primary worktree directory name (default: branch name)
   --flat             Place the bare repo and worktree directly in --dir
                      instead of creating a <name>/ hub root
+  --slug-separator <s>  Store gwoc.slugSeparator in the hub config: branch
+                     names containing "/" flatten into directory names using
+                     <s> (e.g. "_" maps feature/x to feature_x)
   --force            Allow creating a hub inside an existing git repo
   --no-hooks         Skip post-init hooks
   -h, --help         Show help
@@ -48,6 +51,7 @@ export function wtInit(args: string[]): void {
       branch: { type: "string", default: "main" },
       primary: { type: "string", default: "" },
       flat: { type: "boolean", default: false },
+      "slug-separator": { type: "string", default: "" },
       force: { type: "boolean", default: false },
       "no-hooks": { type: "boolean", default: false },
     },
@@ -78,6 +82,10 @@ export function wtInit(args: string[]): void {
   runGit(["init", "--bare", bare]);
   runGit(["--git-dir", bare, "symbolic-ref", "HEAD", `refs/heads/${branch}`]);
   runGit(["--git-dir", bare, "config", "worktree.useRelativePaths", "true"]);
+  const slugSep = values["slug-separator"] as string;
+  if (slugSep) {
+    runGit(["--git-dir", bare, "config", "gwoc.slugSeparator", slugSep]);
+  }
   runGit(["--git-dir", bare, "config", "gwoc.primary", wtName]);
   runGit(["--git-dir", bare, "worktree", "add", "--relative-paths", worktree, "-b", branch]);
   runGit(["-C", worktree, "commit", "--allow-empty", "-m", "Initial commit"]);

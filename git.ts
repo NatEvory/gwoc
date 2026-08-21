@@ -236,6 +236,39 @@ export function worktreePath(slug: string): string {
   return path.join(hubRoot(), slug);
 }
 
+let cachedSlugSeparator: string | null = null;
+
+/**
+ * Directory separator used for branch names containing slashes. "/" (the
+ * default) nests directories; anything else flattens, e.g. "_" turns branch
+ * feature/x into directory feature_x. Read through git's config cascade
+ * (gwoc.slugSeparator), so `git config --global` sets a user-level default
+ * and the hub's bare repo config overrides it per hub.
+ */
+export function slugSeparator(): string {
+  if (cachedSlugSeparator !== null) {
+    return cachedSlugSeparator;
+  }
+  const res = spawnSync("git", ["--git-dir", gitDir(), "config", "--get", "gwoc.slugseparator"], {
+    encoding: "utf8",
+  });
+  const sep = res.status === 0 ? (res.stdout || "").trim() : "";
+  if (!sep) {
+    cachedSlugSeparator = "/";
+  } else if (sep !== "/" && (sep.includes("/") || sep.includes("\\"))) {
+    die(`Invalid gwoc.slugSeparator '${sep}': must not contain path separators (or be exactly "/" for nesting).`);
+  } else {
+    cachedSlugSeparator = sep;
+  }
+  return cachedSlugSeparator;
+}
+
+/** Map a branch name to its worktree directory name via the slug separator. */
+export function branchToSlug(branch: string): string {
+  const sep = slugSeparator();
+  return sep === "/" ? branch : branch.split("/").join(sep);
+}
+
 export function parseGitDirOverride(args: string[]): string[] {
   if (args[0] === "--git-dir") {
     const value = args[1];

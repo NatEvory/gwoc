@@ -34,7 +34,7 @@
     <p>Create a new bare repo hub with a primary worktree.</p>
     <div class="term usage">
       <div class="bar">usage</div>
-      <pre>gwoc init &lt;name&gt; [--dir &lt;path&gt;] [--branch &lt;name&gt;] [--primary &lt;name&gt;] [--flat] [--force] [--no-hooks]</pre>
+      <pre>gwoc init &lt;name&gt; [--dir &lt;path&gt;] [--branch &lt;name&gt;] [--primary &lt;name&gt;] [--flat] [--slug-separator &lt;s&gt;] [--force] [--no-hooks]</pre>
     </div>
     <div class="tablewrap"><table>
       <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
@@ -43,6 +43,7 @@
         <tr><td><code>--branch &lt;name&gt;</code></td><td>main</td><td>Default branch name</td></tr>
         <tr><td><code>--primary &lt;name&gt;</code></td><td>branch name</td><td>Primary worktree directory name</td></tr>
         <tr><td><code>--flat</code></td><td>false</td><td>Place the bare repo and worktree directly in --dir (no &lt;name&gt;/ hub root)</td></tr>
+        <tr><td><code>--slug-separator &lt;s&gt;</code></td><td>none</td><td>Write gwoc.slugSeparator into the hub config: flatten slashed branch names into directory names using &lt;s&gt;</td></tr>
         <tr><td><code>--force</code></td><td>false</td><td>Allow creating a hub inside an existing git repo</td></tr>
         <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-init hooks</td></tr>
       </tbody>
@@ -60,7 +61,7 @@
     <p>Clone a remote repo into a bare hub with a primary worktree.</p>
     <div class="term usage">
       <div class="bar">usage</div>
-      <pre>gwoc clone &lt;url&gt; [name] [--dir &lt;path&gt;] [--primary &lt;name&gt;] [--flat] [--force] [--no-hooks]</pre>
+      <pre>gwoc clone &lt;url&gt; [name] [--dir &lt;path&gt;] [--primary &lt;name&gt;] [--flat] [--slug-separator &lt;s&gt;] [--force] [--no-hooks]</pre>
     </div>
     <div class="tablewrap"><table>
       <thead><tr><th>flag</th><th>default</th><th>description</th></tr></thead>
@@ -69,6 +70,7 @@
         <tr><td><code>--dir &lt;path&gt;</code></td><td>cwd</td><td>Directory to create the hub root in</td></tr>
         <tr><td><code>--primary &lt;name&gt;</code></td><td>default branch name</td><td>Primary worktree directory name</td></tr>
         <tr><td><code>--flat</code></td><td>false</td><td>Place the bare repo and worktree directly in --dir (no &lt;name&gt;/ hub root)</td></tr>
+        <tr><td><code>--slug-separator &lt;s&gt;</code></td><td>none</td><td>Write gwoc.slugSeparator into the hub config: flatten slashed branch names into directory names using &lt;s&gt;</td></tr>
         <tr><td><code>--force</code></td><td>false</td><td>Allow cloning into a directory inside an existing git repo</td></tr>
         <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-clone hooks</td></tr>
       </tbody>
@@ -112,8 +114,10 @@
         <tr><td><code>--no-hooks</code></td><td>false</td><td>Skip post-create hooks</td></tr>
       </tbody>
     </table></div>
-    <p>Slug equals the branch name verbatim, so slashes nest:
-    <code>user/pr-123</code> lands at <code>&lt;hub&gt;/user/pr-123</code>.
+    <p>Slug equals the branch name mapped through
+    <code>gwoc.slugSeparator</code>: by default slashes nest
+    (<code>user/pr-123</code> lands at <code>&lt;hub&gt;/user/pr-123</code>);
+    with a separator set they flatten (<code>user_pr-123</code>).
     Resolution order after the fetch:</p>
     <ol>
       <li>A local branch exists: check it out and wire its upstream to <code>origin/&lt;branch&gt;</code> when the remote-tracking ref exists.</li>
@@ -370,6 +374,13 @@ gwoc default      <span class="c"># default branch name</span></pre>
     <code>GWOC_GIT_DIR</code> environment variable. <code>rm</code> and
     <code>rename</code> refuse to operate on the worktree your shell is
     standing in.</p>
+    <p>Branch names with slashes nest into subdirectories by default. Set
+    <code>gwoc.slugSeparator</code> (e.g. <code>_</code>) to flatten them:
+    branch <code>feature/x</code> then lives at <code>feature_x</code>.
+    <code>git config --global</code> sets a user-wide default; the hub's bare
+    repo config (or <code>init</code>/<code>clone</code>
+    <code>--slug-separator</code>) overrides per hub. Slug-taking commands
+    accept branch or directory names either way.</p>
     <p><code>init</code>, <code>clone</code>, <code>new</code>, and
     <code>checkout</code> run optional hook scripts after creating a worktree
     (<code>post-init</code>, <code>post-clone</code>, <code>post-create</code>).

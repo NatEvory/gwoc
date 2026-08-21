@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
 import { gitInherit, primaryWorktree } from "../../git.ts";
-import { currentBranch, ensureBranchExists, ensureClean, worktreeForBranch } from "../helpers.ts";
+import { currentBranch, ensureBranchExists, ensureClean, resolveBranchArg, worktreeForBranch } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc merge <slug> [--into <branch>]
@@ -38,8 +38,7 @@ export function wtMerge(args: string[]): void {
   }
 
   const into = values.into as string;
-  const sourceBranch = slug;
-  ensureBranchExists(sourceBranch);
+  const sourceBranch = resolveBranchArg(slug);
 
   const primary = primaryWorktree();
   if (!fs.existsSync(primary)) {

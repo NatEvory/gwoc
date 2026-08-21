@@ -1252,3 +1252,147 @@ describe("running from inside the hub", () => {
     expect(lines).toContain("main");
   });
 });
+
+describe("slug separator", () => {
+  let parent: string;
+  let hub: string;
+
+  function runIn(cwd: string, args: string[], extraEnv: Record<string, string> = {}) {
+    const res = spawnSync("bun", [gwoc, ...args], {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GWOC_GIT_DIR: "", ...extraEnv },
+    });
+    return {
+      stdout: (res.stdout || "").trim(),
+      stderr: (res.stderr || "").trim(),
+      status: res.status ?? 1,
+    };
+  }
+
+  beforeAll(() => {
+    parent = fs.mkdtempSync(path.join(os.tmpdir(), "gwoc-slugsep-"));
+    hub = path.join(parent, "proj");
+    expect(runIn(parent, ["init", "proj", "--slug-separator", "_"]).status).toBe(0);
+  });
+
+  afterAll(() => {
+    fs.rmSync(parent, { recursive: true, force: true });
+  });
+
+  test("new with a slashed name flattens the directory, keeps the branch slashed", () => {
+    const res = runIn(hub, ["new", "feature/ticket-1"]);
+    expect(res.status).toBe(0);
+    expect(fs.existsSync(path.join(hub, "feature_ticket-1"))).toBe(true);
+    expect(fs.existsSync(path.join(hub, "feature"))).toBe(false);
+    const head = spawnSync("git", ["-C", path.join(hub, "feature_ticket-1"), "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8" });
+    expect((head.stdout || "").trim()).toBe("feature/ticket-1");
+  });
+
+  test("doctor sees no slug/branch mismatch for flattened worktrees", () => {
+    const res = runIn(hub, ["doctor"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain("All checks passed");
+  });
+
+  test("status resolves by branch name and by directory name", () => {
+    const byBranch = runIn(hub, ["status", "feature/ticket-1"]);
+    expect(byBranch.status).toBe(0);
+    expect(byBranch.stdout).toContain("Branch:       feature/ticket-1");
+    const byDir = runIn(hub, ["status", "feature_ticket-1"]);
+    expect(byDir.status).toBe(0);
+    expect(byDir.stdout).toContain("Branch:       feature/ticket-1");
+  });
+
+  test("path prints the flattened location for a branch name", () => {
+    const res = runIn(hub, ["path", "feature/ticket-1"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toBe(path.join(hub, "feature_ticket-1"));
+  });
+
+  test("checkout of a slashed local branch lands in a flat directory", () => {
+    spawnSync("git", ["--git-dir", path.join(hub, "proj.git"), "branch", "feature/co-test", "main"], { stdio: "ignore" });
+    const res = runIn(hub, ["checkout", "feature/co-test", "--no-fetch"]);
+    expect(res.status).toBe(0);
+    expect(fs.existsSync(path.join(hub, "feature_co-test"))).toBe(true);
+  });
+
+  test("completion emits full flattened slugs", () => {
+    const res = runIn(hub, ["__complete", "2", "gwoc", "rm", "feature"]);
+    expect(res.status).toBe(0);
+    const lines = res.stdout.split(/\n/).filter(Boolean);
+    expect(lines).toContain("feature_ticket-1");
+    expect(lines).toContain("feature_co-test");
+  });
+
+  test("rm --prune by branch name removes worktree and the slashed branch", () => {
+    const res = runIn(hub, ["rm", "feature/co-test", "--prune"]);
+    expect(res.status).toBe(0);
+    expect(res.stdout).toContain("Deleted branch: feature/co-test");
+    expect(fs.existsSync(path.join(hub, "feature_co-test"))).toBe(false);
+    const branches = spawnSync("git", ["--git-dir", path.join(hub, "proj.git"), "branch"], { encoding: "utf8" });
+    expect(branches.stdout).not.toContain("feature/co-test");
+  });
+
+  test("colliding flat names are refused", () => {
+    expect(runIn(hub, ["new", "collide_x"]).status).toBe(0);
+    const res = runIn(hub, ["new", "collide/x"]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toContain("already exists");
+  });
+
+  test("merge accepts the branch name for a flattened worktree", () => {
+    expect(runIn(hub, ["new", "feature/merge-me"]).status).toBe(0);
+    const wt = path.join(hub, "feature_merge-me");
+    fs.writeFileSync(path.join(wt, "m.txt"), "m\n");
+    spawnSync("git", ["-C", wt, "add", "m.txt"], { stdio: "ignore" });
+    spawnSync("git", ["-C", wt, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "m"], { stdio: "ignore" });
+    const res = runIn(hub, ["merge", "feature/merge-me"]);
+    expect(res.status).toBe(0);
+    expect(fs.existsSync(path.join(hub, "main", "m.txt"))).toBe(true);
+  });
+
+  test("user-level git config applies without hub-level config", () => {
+    const cfg = path.join(parent, "gitconfig-global");
+    fs.writeFileSync(cfg, "[gwoc]\n\tslugSeparator = _\n[user]\n\tname = t\n\temail = t@t\n");
+    const parent2 = path.join(parent, "userlevel");
+    fs.mkdirSync(parent2);
+    const env = { GIT_CONFIG_GLOBAL: cfg };
+    expect(runIn(parent2, ["init", "p"], env).status).toBe(0);
+    const hub2 = path.join(parent2, "p");
+    expect(runIn(hub2, ["new", "user/level"], env).status).toBe(0);
+    expect(fs.existsSync(path.join(hub2, "user_level"))).toBe(true);
+  });
+
+  test("hub-level config overrides user-level", () => {
+    const cfg = path.join(parent, "gitconfig-global");
+    const parent3 = path.join(parent, "override");
+    fs.mkdirSync(parent3);
+    const env = { GIT_CONFIG_GLOBAL: cfg };
+    // `--slug-separator --` would read as the end-of-options marker; use = form.
+    expect(runIn(parent3, ["init", "p", "--slug-separator=--"], env).status).toBe(0);
+    const hub3 = path.join(parent3, "p");
+    expect(runIn(hub3, ["new", "over/ride"], env).status).toBe(0);
+    expect(fs.existsSync(path.join(hub3, "over--ride"))).toBe(true);
+  });
+
+  test("invalid separator (contains a slash) dies clearly", () => {
+    const parent4 = path.join(parent, "invalid");
+    fs.mkdirSync(parent4);
+    expect(runIn(parent4, ["init", "p"]).status).toBe(0);
+    const hub4 = path.join(parent4, "p");
+    spawnSync("git", ["--git-dir", path.join(hub4, "p.git"), "config", "gwoc.slugSeparator", "a/b"], { stdio: "ignore" });
+    const res = runIn(hub4, ["new", "x/y"]);
+    expect(res.status).not.toBe(0);
+    expect(res.stderr).toContain("Invalid gwoc.slugSeparator");
+  });
+
+  test("nested behavior is unchanged without a separator", () => {
+    const parent5 = path.join(parent, "default");
+    fs.mkdirSync(parent5);
+    expect(runIn(parent5, ["init", "p"]).status).toBe(0);
+    const hub5 = path.join(parent5, "p");
+    expect(runIn(hub5, ["new", "user/nested"]).status).toBe(0);
+    expect(fs.existsSync(path.join(hub5, "user", "nested"))).toBe(true);
+  });
+});

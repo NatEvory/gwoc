@@ -29,7 +29,7 @@ Complete flag reference for every gwoc command.
 Create a new bare repo hub with a primary worktree.
 
 ```
-gwoc init <name> [--dir <path>] [--branch <name>] [--primary <name>] [--flat] [--force] [--no-hooks]
+gwoc init <name> [--dir <path>] [--branch <name>] [--primary <name>] [--flat] [--slug-separator <s>] [--force] [--no-hooks]
 ```
 
 | Flag | Default | Description |
@@ -38,6 +38,7 @@ gwoc init <name> [--dir <path>] [--branch <name>] [--primary <name>] [--flat] [-
 | `--branch <name>` | main | Default branch name |
 | `--primary <name>` | branch name | Primary worktree directory name |
 | `--flat` | false | Place the bare repo and worktree directly in `--dir` (no `<name>/` hub root) |
+| `--slug-separator <s>` | none | Write `gwoc.slugSeparator` into the hub config (see Slug mapping) |
 | `--force` | false | Allow creating a hub inside an existing git repo |
 | `--no-hooks` | false | Skip `post-init` hooks |
 
@@ -48,7 +49,7 @@ Creates: `<dir>/<name>/` (hub root) containing `<name>.git` (bare repo) + `<prim
 Clone a remote repo into a bare hub with a primary worktree.
 
 ```
-gwoc clone <url> [name] [--dir <path>] [--primary <name>] [--flat] [--force] [--no-hooks]
+gwoc clone <url> [name] [--dir <path>] [--primary <name>] [--flat] [--slug-separator <s>] [--force] [--no-hooks]
 ```
 
 | Flag | Default | Description |
@@ -57,6 +58,7 @@ gwoc clone <url> [name] [--dir <path>] [--primary <name>] [--flat] [--force] [--
 | `--dir <path>` | cwd | Directory to create the hub root in |
 | `--primary <name>` | default branch name | Primary worktree directory name |
 | `--flat` | false | Place the bare repo and worktree directly in `--dir` (no `<name>/` hub root) |
+| `--slug-separator <s>` | none | Write `gwoc.slugSeparator` into the hub config (see Slug mapping) |
 | `--force` | false | Allow cloning into a directory inside an existing git repo |
 | `--no-hooks` | false | Skip `post-clone` hooks |
 
@@ -90,7 +92,7 @@ gwoc checkout <branch> [--no-fetch] [--no-hooks]
 | `--no-fetch` | false | Skip the upfront `git fetch --all --prune` |
 | `--no-hooks` | false | Skip `post-create` hooks |
 
-Slug = branch verbatim, so slashes nest (e.g. `user/pr-123` lands at `<hub>/user/pr-123`). Resolution order after fetch:
+Slug = branch mapped through `gwoc.slugSeparator` (see Slug mapping): by default slashes nest (`user/pr-123` lands at `<hub>/user/pr-123`); with a separator set, they flatten (`user_pr-123`). Resolution order after fetch:
 
 1. `refs/heads/<branch>` exists → check it out, and set its upstream to `origin/<branch>` when that remote-tracking ref exists. For mirror-less bares (no `refs/remotes/origin/*`, e.g. a raw `git clone --bare`), set `branch.<name>.{remote,merge}` directly instead so push/pull work without `-u`.
 2. Exactly one `refs/remotes/*/<branch>` → create local tracking branch with `--track -b`.
@@ -332,3 +334,15 @@ Commands that operate on a hub resolve the bare repo in this order:
 
 `--git-dir <path>` / `GWOC_GIT_DIR` override all of this. `rm` and `rename`
 refuse to operate on the worktree containing the cwd (cd out first).
+
+## Slug mapping
+
+By default slug = branch verbatim, so slashes nest directories. Setting
+`gwoc.slugSeparator` (any string without `/`) flattens: with `_`, branch
+`feature/x` lives at `<hub>/feature_x`. Read through git's config cascade, so
+`git config --global gwoc.slugSeparator _` is a user-level default and the
+hub's bare repo config overrides it. Slug-taking commands (`rm`, `merge`,
+`status`, ...) resolve their argument as a directory name, then as a branch
+name mapped through the separator, then as any worktree with that branch
+checked out. `doctor`'s mismatch check compares through the mapping. Colliding
+flat names (branches `feature/x` and `feature_x`) are refused at creation.

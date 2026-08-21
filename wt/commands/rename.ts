@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
-import { gitDir, gitExitCode, runGit, worktreePath } from "../../git.ts";
-import { currentBranch, ensureClean, ensureCwdOutside } from "../helpers.ts";
+import { branchToSlug, gitDir, gitExitCode, runGit, worktreePath } from "../../git.ts";
+import { currentBranch, ensureClean, ensureCwdOutside, resolveWorktreePath } from "../helpers.ts";
 
 function usage(): void {
   process.stdout.write(`Usage: gwoc rename <old-slug> <new-slug> [--force]
@@ -51,8 +51,10 @@ export function wtRename(args: string[]): void {
     die("Old and new slugs are the same");
   }
 
-  const oldPath = worktreePath(oldSlug);
-  const newPath = worktreePath(newSlug);
+  const oldPath = resolveWorktreePath(oldSlug);
+  // <new> names the branch; the directory name is mapped through the slug
+  // separator (identical unless one is configured).
+  const newPath = worktreePath(branchToSlug(newSlug));
 
   if (!fs.existsSync(oldPath)) {
     die(`Worktree not found: ${oldPath}`);

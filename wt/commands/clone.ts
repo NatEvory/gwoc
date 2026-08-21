@@ -21,6 +21,9 @@ Options:
   --primary <name>   Primary worktree directory name (default: default branch name)
   --flat             Place the bare repo and worktree directly in --dir
                      instead of creating a <name>/ hub root
+  --slug-separator <s>  Store gwoc.slugSeparator in the hub config: branch
+                     names containing "/" flatten into directory names using
+                     <s> (e.g. "_" maps feature/x to feature_x)
   --force            Allow cloning into a directory inside an existing git repo
   --no-hooks         Skip post-clone hooks
   -h, --help         Show help
@@ -47,6 +50,7 @@ export function wtClone(args: string[]): void {
       dir: { type: "string", default: process.cwd() },
       primary: { type: "string", default: "" },
       flat: { type: "boolean", default: false },
+      "slug-separator": { type: "string", default: "" },
       force: { type: "boolean", default: false },
       "no-hooks": { type: "boolean", default: false },
     },
@@ -86,6 +90,10 @@ export function wtClone(args: string[]): void {
   runGit(["--git-dir", bare, "config", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"]);
   runGit(["--git-dir", bare, "fetch", "origin"]);
   runGit(["--git-dir", bare, "config", "worktree.useRelativePaths", "true"]);
+  const slugSep = values["slug-separator"] as string;
+  if (slugSep) {
+    runGit(["--git-dir", bare, "config", "gwoc.slugSeparator", slugSep]);
+  }
 
   let branch = "";
   const headRef = spawnSync("git", ["--git-dir", bare, "symbolic-ref", "-q", "HEAD"], { encoding: "utf8" });

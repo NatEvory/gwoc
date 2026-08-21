@@ -2,6 +2,7 @@ import { parseArgs } from "node:util";
 
 import { die, normalizeSlug } from "../../common.ts";
 import { defaultBranch, gitDir, hubRoot, primaryWorktree, worktreePath } from "../../git.ts";
+import { resolveWorktreePath } from "../helpers.ts";
 
 function usageRoot(): void {
   process.stdout.write(`Usage: gwoc root
@@ -99,5 +100,5 @@ export function wtPath(args: string[]): void {
   if (!slug) {
     die("Missing slug");
   }
-  process.stdout.write(worktreePath(slug) + "\n");
+  process.stdout.write(resolveWorktreePath(slug) + "\n");
 }
